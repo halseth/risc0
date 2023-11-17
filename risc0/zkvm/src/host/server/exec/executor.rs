@@ -238,6 +238,12 @@ impl<'a> ExecutorImpl<'a> {
         Self::with_details(env, image, obj_ctx, profiler)
     }
 
+
+    /// Write any dirty pages to memory and return a clone of the current memory image.
+    pub fn memory(&mut self) -> Result<MemoryImage> {
+        self.monitor.build_image(self.pc)
+    }
+
     /// This will run the executor to get a [Session] which contain the results
     /// of the execution.
     pub fn run(&mut self) -> Result<Session> {

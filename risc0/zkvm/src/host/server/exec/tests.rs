@@ -101,6 +101,17 @@ fn basic() {
 }
 
 #[test]
+fn read_memory() {
+    let program = Program::load_elf(elf, GUEST_MAX_MEM as u32)?;
+    let image = MemoryImage::new(&program, PAGE_SIZE as u32)?;
+
+    let env = ExecutorEnv::default();
+    let mut exec = ExecutorImpl::from_elf(env, MULTI_TEST_ELF).unwrap();
+    let img = exec.memory();
+    assert_eq!(img, image);
+}
+
+#[test]
 fn system_split() {
     let entry = 0x4000;
     let env = ExecutorEnv::builder()
