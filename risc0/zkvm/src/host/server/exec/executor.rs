@@ -244,6 +244,16 @@ impl<'a> ExecutorImpl<'a> {
         self.monitor.build_image(self.pc)
     }
 
+    /// Write register.
+    pub fn write_register(&mut self, reg: usize, val: u32)  {
+        self.monitor.store_register(reg, val);
+    }
+
+    /// Read register.
+    pub fn read_register(&mut self, reg: usize) -> u32  {
+        self.monitor.load_register(reg)
+    }
+
     /// This will run the executor to get a [Session] which contain the results
     /// of the execution.
     pub fn run(&mut self) -> Result<Session> {
