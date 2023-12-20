@@ -20,7 +20,7 @@ pub(crate) mod control_id;
 pub(crate) mod receipt;
 pub(crate) mod recursion;
 #[cfg(feature = "prove")]
-pub(crate) mod server;
+pub mod server;
 
 #[cfg(any(feature = "client", feature = "prove"))]
 mod protos {

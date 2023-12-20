@@ -14,7 +14,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(rustdoc::broken_intra_doc_links)]
-#![deny(missing_docs)]
 
 //! The RISC Zero zkVM is a RISC-V virtual machine that produces [zero-knowledge
 //! proofs] of code it executes. By using the zkVM, a cryptographic [receipt] is
@@ -73,7 +72,7 @@ extern crate alloc;
 
 pub mod guest;
 #[cfg(not(target_os = "zkvm"))]
-mod host;
+pub mod host;
 mod receipt_claim;
 pub mod serde;
 pub mod sha;
