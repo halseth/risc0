@@ -27,6 +27,8 @@ pub struct Program {
 
     /// The initial memory image
     pub image: BTreeMap<u32, u32>,
+
+    pub program_range: core::ops::Range<u32>,
 }
 
 impl Program {
@@ -103,6 +105,10 @@ impl Program {
                 }
             }
         }
-        Ok(Program { entry, image })
+        let text = elf.section_header_by_name(".text")?.ok_or(anyhow!("Missing .text section"))?;
+        let start_addr = text.sh_addr as u32;
+        let end_addr = start_addr + text.sh_size as u32;
+
+        Ok(Program { entry, image, program_range: (start_addr..end_addr)})
     }
 }
