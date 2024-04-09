@@ -198,7 +198,7 @@ macro_rules! impl_syscall {
                                    )?
                                  )?
         ) -> Return {
-            #[cfg(target_os = "zkvm")] {
+            //#[cfg(target_os = "zkvm")] {
                 let a0: u32;
                 let a1: u32;
                 ::core::arch::asm!(
@@ -218,9 +218,9 @@ macro_rules! impl_syscall {
                           )?
                         )?);
                 Return(a0, a1)
-            }
-            #[cfg(not(target_os = "zkvm"))]
-            unimplemented!()
+            //}
+            //#[cfg(not(target_os = "zkvm"))]
+            //unimplemented!()
         }
     }
 }
