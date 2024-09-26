@@ -20,14 +20,27 @@ use risc0_zkvm::guest::env;
 
 fn main() {
     // Decode the verifying key, message, and signature from the inputs.
-    let (encoded_verifying_key, schnorr_veifying_key, message, signature): (EncodedPoint, schnorr::VerifyingKey, Vec<u8>, Signature) = env::read();
+    let (encoded_verifying_key, schnorr_verifying_key, message, signature, schnorr_sig_bytes): (
+        EncodedPoint,
+        schnorr::VerifyingKey,
+        Vec<u8>,
+        Signature,
+        Vec<u8>,
+    ) = env::read();
     let verifying_key = VerifyingKey::from_encoded_point(&encoded_verifying_key).unwrap();
+
+    let b = schnorr_sig_bytes.as_slice();
+    let schnorr_sig = schnorr::Signature::try_from(b).unwrap();
 
     // Verify the signature, panicking if verification fails.
     verifying_key
         .verify(&message, &signature)
         .expect("ECDSA signature verification failed");
 
+    schnorr_verifying_key
+        .verify(&message, &schnorr_sig)
+        .expect("schnorr verification failed");
+
     // Commit to the journal the verifying key and message that was signed.
-    env::commit(&(encoded_verifying_key, schnorr_veifying_key, message ));
+    env::commit(&(encoded_verifying_key, schnorr_verifying_key, message ));
 }

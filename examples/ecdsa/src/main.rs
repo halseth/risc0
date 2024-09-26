@@ -17,6 +17,7 @@ use k256::{
     ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey},
     schnorr, EncodedPoint,
 };
+use k256::schnorr::signature::Verifier;
 use rand_core::OsRng;
 use risc0_zkvm::{default_prover, ExecutorEnv, Receipt};
 
@@ -29,13 +30,18 @@ fn prove_ecdsa_verification(
     schnorr_verifying_key: &schnorr::VerifyingKey,
     message: &[u8],
     signature: &Signature,
+    schnorr_sig: &schnorr::Signature,
 ) -> Receipt {
+
+    let schnorr_sig_bytes = schnorr_sig.to_bytes();
+    let schnorr_sig_bytes_ref = schnorr_sig_bytes.as_slice();
 
     let input = (
         verifying_key.to_encoded_point(true),
         schnorr_verifying_key,
         message,
         signature,
+        schnorr_sig_bytes_ref,
     );
     let env = ExecutorEnv::builder()
         .write(&input)
@@ -57,7 +63,10 @@ fn main() {
     let signature: Signature = signing_key.sign(message);
 
     let schnorr_key = schnorr::SigningKey::random(&mut OsRng);
+    let schnorr_sig = schnorr_key.sign(message);
     let schnorr_ver = schnorr_key.verifying_key();
+
+    schnorr_ver.verify(message, &schnorr_sig).expect("schnorr verification failed");
 
     // Run signature verified in the zkVM guest and get the resulting receipt.
     let receipt = prove_ecdsa_verification(
@@ -65,6 +74,7 @@ fn main() {
         schnorr_ver,
         message,
         &signature,
+        &schnorr_sig,
     );
 
     // Verify the receipt and then access the journal.
