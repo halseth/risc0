@@ -14,14 +14,13 @@
 
 use k256::{
     ecdsa::{signature::Verifier, Signature, VerifyingKey},
-    EncodedPoint,
+    EncodedPoint, schnorr,
 };
 use risc0_zkvm::guest::env;
 
 fn main() {
     // Decode the verifying key, message, and signature from the inputs.
-    let (encoded_verifying_key, message, signature): (EncodedPoint, Vec<u8>, Signature) =
-        env::read();
+    let (encoded_verifying_key, schnorr_veifying_key, message, signature): (EncodedPoint, schnorr::VerifyingKey, Vec<u8>, Signature) = env::read();
     let verifying_key = VerifyingKey::from_encoded_point(&encoded_verifying_key).unwrap();
 
     // Verify the signature, panicking if verification fails.
@@ -30,5 +29,5 @@ fn main() {
         .expect("ECDSA signature verification failed");
 
     // Commit to the journal the verifying key and message that was signed.
-    env::commit(&(encoded_verifying_key, message));
+    env::commit(&(encoded_verifying_key, schnorr_veifying_key, message ));
 }

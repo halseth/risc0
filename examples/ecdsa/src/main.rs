@@ -15,7 +15,7 @@
 use ecdsa_methods::{ECDSA_VERIFY_ELF, ECDSA_VERIFY_ID};
 use k256::{
     ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey},
-    EncodedPoint,
+    schnorr, EncodedPoint,
 };
 use rand_core::OsRng;
 use risc0_zkvm::{default_prover, ExecutorEnv, Receipt};
@@ -26,10 +26,17 @@ use risc0_zkvm::{default_prover, ExecutorEnv, Receipt};
 /// signature from the committed public key over the committed message.
 fn prove_ecdsa_verification(
     verifying_key: &VerifyingKey,
+    schnorr_verifying_key: &schnorr::VerifyingKey,
     message: &[u8],
     signature: &Signature,
 ) -> Receipt {
-    let input = (verifying_key.to_encoded_point(true), message, signature);
+
+    let input = (
+        verifying_key.to_encoded_point(true),
+        schnorr_verifying_key,
+        message,
+        signature,
+    );
     let env = ExecutorEnv::builder()
         .write(&input)
         .unwrap()
@@ -49,17 +56,29 @@ fn main() {
     let message = b"This is a message that will be signed, and verified within the zkVM";
     let signature: Signature = signing_key.sign(message);
 
+    let schnorr_key = schnorr::SigningKey::random(&mut OsRng);
+    let schnorr_ver = schnorr_key.verifying_key();
+
     // Run signature verified in the zkVM guest and get the resulting receipt.
-    let receipt = prove_ecdsa_verification(signing_key.verifying_key(), message, &signature);
+    let receipt = prove_ecdsa_verification(
+        signing_key.verifying_key(),
+        schnorr_ver,
+        message,
+        &signature,
+    );
 
     // Verify the receipt and then access the journal.
     receipt.verify(ECDSA_VERIFY_ID).unwrap();
-    let (receipt_verifying_key, receipt_message): (EncodedPoint, Vec<u8>) =
-        receipt.journal.decode().unwrap();
+    let (receipt_verifying_key, schnorr_receipt_key, receipt_message): (
+        EncodedPoint,
+        schnorr::VerifyingKey,
+        Vec<u8>,
+    ) = receipt.journal.decode().unwrap();
 
     println!(
-        "Verified the signature over message {:?} with key {}",
+        "Verified the signature over message {:?} with key {}. Schnorr equals: {}",
         std::str::from_utf8(&receipt_message[..]).unwrap(),
         receipt_verifying_key,
+        schnorr_receipt_key == *schnorr_ver,
     );
 }
